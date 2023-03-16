@@ -23,7 +23,6 @@ def transformer(cache_data):
     numerical_cols = features['num_cols']
     categorical_cols = features['cat_cols']
 
-
     # 步骤一：确定预处理步骤
 
     numerical_transformer = Pipeline(steps=[

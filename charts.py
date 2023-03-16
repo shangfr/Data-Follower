@@ -22,6 +22,7 @@ def e_bar(result):
                 'type': 'shadow'
             }
         },
+        "grid": {"left": "3%", "right": "4%", "bottom": "0%", "containLabel": True},
         "xAxis": {
             "type": "category",
             "data": result['names'],
@@ -36,7 +37,7 @@ def e_bar(result):
     }
     st_echarts(
         options=options,
-        height="400px",
+        height="300px",
     )
 
 
@@ -87,6 +88,7 @@ def e_scatter(result):
             'pieces': pieces
         },
         'grid': {
+            'width':'90%',
             'left': 120
         },
         'xAxis': {},
@@ -94,14 +96,14 @@ def e_scatter(result):
         'series': {
             'type': 'scatter',
             'encode': {'tooltip': [0, 1]},
-            'symbolSize': 15,
+            'symbolSize': 10,
             'itemStyle': {
                 'borderColor': '#555'
             },
             'data': data
         }
     }
-    st_echarts(options=option, height="500px")
+    st_echarts(options=option, height="400px")
 
 
 def heatmap(result):
@@ -109,6 +111,8 @@ def heatmap(result):
     '''
     xy_label = result['classes']
     c_m = result['data']
+    data_min = min(min(c_m))
+    data_max = max(max(c_m))
     data = []
     for i in range(len(c_m)):
         for j in range(len(c_m[i])):
@@ -116,38 +120,44 @@ def heatmap(result):
 
     text_style = {
         'color': '#000',
-        'fontSize': 16,
+        'fontSize': 12,
     }
-    title = 'Confusion matrix'
+    title = result['title']
+    xname = ''
+    yname = ''
+    show = False
+    if title == 'Confusion Matrix':
+        xname = 'Predicted label'
+        yname = 'True label'
+        show = True
     option = {
         'title': {
             'text': title
         },
         "tooltip": {"position": "top"},
-        "grid": {"height": "50%", "top": "10%"},
-        "xAxis": {'name': 'Predicted label', 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
-        "yAxis": {'name': 'True label', 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
+        "grid": {},
+        "xAxis": {'name': xname, 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
+        "yAxis": {'name': yname, 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
         "visualMap": {
-            "min": 0,
-            "max": max(max(data)),
-            "calculable": True,
-            "orient": "horizontal",
-            "left": "center",
-            "bottom": "15%",
+            "min": data_min,
+            "max": data_max,
+            "orient": "vertical",
+            "left": "right",
+            "top": "center",
         },
         "series": [
             {
-                "name": "混淆矩阵",
+                "name": title,
                 "type": "heatmap",
                 "data": data,
-                "label": {"show": True},
+                "label": {"show": show},
                 "emphasis": {
                     "itemStyle": {"shadowBlur": 10, "shadowColor": "rgba(0, 0, 0, 0.5)"}
                 },
             }
         ],
     }
-    st_echarts(option, height="500px")
+    st_echarts(option, height="300px")
 
 
 def e_roc(result):
@@ -183,6 +193,10 @@ def e_roc(result):
         'series': [
             {
                 'type': 'line',
+                'itemStyle': {
+                    'color': 'rgb(131, 255, 70)'
+                },
+                'areaStyle': {},
                 'smooth': True,
                 'symbolSize': 1,
                 'data': data
@@ -222,10 +236,46 @@ def e_pr(result):
         'series': [
             {
                 'type': 'line',
+                'itemStyle': {
+                    'color': 'rgb(255, 70, 131)'
+                },
+                'areaStyle': {},
                 'smooth': True,
                 'symbolSize': 1,
                 'data': data
             }
         ]
+    }
+    st_echarts(options=options, height="300px")
+
+
+def e_y_vs(result):
+    y_true = result['y_true']
+    y_pred = result['y_pred']
+    x = list(range(len(y_true)))
+    options = {
+        "title": {"text": "True vs Pred"},
+        "tooltip": {"trigger": "axis"},
+        "legend": {"data": ["y_true", "y_pred"]},
+        "grid": {"left": "3%", "right": "4%", "bottom": "0%", "containLabel": True},
+        "toolbox": {"feature": {"saveAsImage": {}}},
+        "xAxis": {
+            "type": "category",
+            "boundaryGap": False,
+            "data": x,
+        },
+        "yAxis": {"type": "value"},
+        "series": [
+            {
+                "name": "y_true",
+                "type": "line",
+                "data": y_true,
+            },
+            {
+                "name": "y_pred",
+                "type": "line",
+                "data": y_pred,
+            },
+        ],
     }
     st_echarts(options=options, height="300px")

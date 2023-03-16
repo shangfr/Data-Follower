@@ -75,7 +75,7 @@ def model_cls(datasets, model_parm):
     feature_names = [feature_names[i] for i in ind]
 
     fig_data = {'feature_importance': {'names': feature_names, 'importance': feature_importance[ind].tolist()},
-                'cm': {'data': cm.tolist(), 'classes': target_names},
+                'cm': {'data': cm.tolist(), 'classes': target_names, 'title':'Confusion Matrix'},
                 'roc': {'fpr': fpr.tolist(), 'tpr': tpr.tolist(), 'AUC': round(auc(fpr, tpr), 2), 'positive': target_names[pos_id]},
                 'pr': {'prec': prec.tolist(), 'recall': recall.tolist(), 'AP': AP}
                 }
@@ -122,7 +122,8 @@ def model_regr(datasets, model_parm):
     result = f'🔴 mean_squared_error:  {round(mse,3)} \n🔴 r2_score:  {round(r2,3)}'
     report = {'score': result}
     feature_names = [feature_names[i] for i in ind]
-    fig_data = {'feature_importance': {'names': feature_names, 'importance': feature_importance[ind].round(3).tolist()}
+    fig_data = {'feature_importance': {'names': feature_names, 'importance': feature_importance[ind].round(3).tolist()},
+                'y_vs':{'y_true':y_test.round(3).tolist(),'y_pred':y_pred.round(3).tolist()}
                 }
 
     # df=pd.DataFrame.from_dict(search.cv_results_)

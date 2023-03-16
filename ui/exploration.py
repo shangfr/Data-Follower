@@ -154,6 +154,7 @@ def data_exploration(cache_data):
         st.stop()
 
     parm_ml['features'] = features
+    parm_ml['feature_names'] = features['num_cols']+features['cat_cols']
     parm_ml['max_n'] = max_n
     if hash_value != hash(json.dumps(parm_ml)):
         st.session_state['ml_step'] = 1
@@ -167,3 +168,13 @@ def data_exploration(cache_data):
         cache_data['datasets'] = datasets
         cache_data['output_pipe']['preprocessor'] = preprocessor
         st.session_state['ml_step'] = 2
+
+    if st.session_state['ml_step'] == 1:
+        st.warning('请点击🔧进行数据预处理', icon='⚠️')
+        st.stop()
+    
+    st.sidebar.success('已完成数据预处理', icon="📝")
+
+    
+    
+    

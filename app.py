@@ -8,9 +8,9 @@ import os
 import pickle
 import pandas as pd
 import streamlit as st
-from io import BytesIO
-from ui import data_exploration, data_modeling, model_prediction
-from charts import e_bar, e_scatter, heatmap, e_roc, e_pr
+from ui import data_exploration, data_analysis
+from ui import data_modeling, result_display
+from ui import model_prediction
 
 
 @st.cache_data(show_spinner=False)
@@ -20,30 +20,6 @@ def get_file_content_as_string(path):
     with open(path, 'r+', encoding='utf-8') as fo:
         content = fo.read()
     return content
-
-
-def read_uploaded_file(uploaded_file):
-    '''read uploaded file.
-    '''
-    dtype = uploaded_file.name.split('.')[-1]
-    if dtype in ['csv', 'txt']:
-        df = pd.read_csv(uploaded_file)
-    elif dtype in ['xls', 'xlsx']:
-        df = pd.read_excel(uploaded_file)
-
-    dts = df.dtypes
-    var_count = df.nunique(axis=0, dropna=True)
-
-    df_dt = pd.DataFrame(
-        {'dtypes': dts.values.astype(str)}, index=dts.index)
-    df_dt = df_dt.join(var_count.rename('var_count'))
-    df_dt['effective'] = [True]*len(dts)
-    df_dt.index.name = 'variable'
-    df_dt.reset_index(inplace=True)
-
-    origin = {'data': df, 'dtype_table': df_dt}
-
-    return origin
 
 
 def init_state():
@@ -61,26 +37,36 @@ def init_state():
                                                           'model': '',
                                                           'report': {}}}
 
+    if 'loaded' not in st.session_state:
+        st.session_state['loaded'] = False
+
     if 'disabled' not in st.session_state:
         st.session_state['disabled'] = False
-
+        
     if 'file_id' not in st.session_state:
         st.session_state['file_id'] = 0
 
     if 'ml_step' not in st.session_state:
         st.session_state['ml_step'] = 0
 
-
-def ml_step_0():
-    '''delete session_state.
+def reset_state():
+    '''delete session_state and init.
     '''
     for key in st.session_state.keys():
         del st.session_state[key]
-
-    st.sidebar.warning('请先上传数据集', icon='👆')
-
     init_state()
 
+def load_state(cache_data):
+    reset_state()
+    st.session_state['cache_data'] = cache_data
+    st.session_state['ml_step'] = 3
+    st.session_state.ml_type = cache_data['parm_ml']['ml_type']
+    st.session_state['loaded'] = True
+    st.session_state['disabled'] = True
+    
+def show_ml_step():
+    '''show ml step.
+    '''
     st.header('1. Methods of data exploration')
     ui_info1 = '''
                 `EDA`
@@ -100,39 +86,51 @@ def ml_step_0():
             '''
 
     st.markdown(ui_info2)
+    st.stop()
 
 
-def pickle_model(model):
-    '''Pickle the model inside bytes.
+def read_uploaded_file():
+    '''read uploaded file.
     '''
-    f = BytesIO()
-    pickle.dump(model, f)
-    return f
+    uploaded_file = st.sidebar.file_uploader('上传数据', type=['xlsx', 'csv'])
+    if uploaded_file is None:
+        st.sidebar.warning('请先上传数据集', icon='👆')
+        reset_state()
+        show_ml_step()
+    file_id = uploaded_file.id
+    if file_id != st.session_state['file_id']:
+        dtype = uploaded_file.name.split('.')[-1]
+        if dtype in ['csv', 'txt']:
+            df = pd.read_csv(uploaded_file)
+        elif dtype in ['xls', 'xlsx']:
+            df = pd.read_excel(uploaded_file)
+
+        dts = df.dtypes
+        var_count = df.nunique(axis=0, dropna=True)
+
+        df_dt = pd.DataFrame(
+            {'dtypes': dts.values.astype(str)}, index=dts.index)
+        df_dt = df_dt.join(var_count.rename('var_count'))
+        df_dt['effective'] = [True]*len(dts)
+        df_dt.index.name = 'variable'
+        df_dt.reset_index(inplace=True)
+
+        st.session_state['cache_data']['origin'] = {
+            'data': df, 'dtype_table': df_dt}
+        st.session_state['file_id'] = file_id
+        st.session_state['ml_step'] = 1
+        st.sidebar.success('数据更换成功', icon="✅")
+    else:
+        st.sidebar.success('数据上传成功', icon="✅")
+
+    return st.session_state['cache_data']
 
 
-def show_download(cache_data):
-    '''show download for preprocessing data and trained model.
+def cache_save(file_name='dict_file.pkl'):
+    '''save cache_data.
     '''
-    col0, col1, col2 = st.sidebar.columns([1, 1, 1])
-
-    X = cache_data['datasets']['X']
-    sk_model = cache_data['output_pipe']['model']
-
-    col0.download_button(
-        label='📝',
-        data=pd.DataFrame(X).to_csv(index=False).encode('utf-8'),
-        file_name='preprocessing_df.csv',
-        mime='text/csv',
-        help='download the preprocessing dataframe.'
-    )
-
-    col2.download_button(
-        label='💠',
-        data=pickle_model(sk_model),
-        file_name='model.pkl',
-        help='download the trained model.'
-    )
-
+    with open(file_name, 'wb') as f_save:
+        pickle.dump(st.session_state['cache_data'], f_save)
 
 @st.cache_resource
 def load_pickle(file_name='dict_file.pkl'):
@@ -142,77 +140,34 @@ def load_pickle(file_name='dict_file.pkl'):
         cache_data = pickle.load(fr)
     return cache_data
 
-
-def cache_save(file_name='dict_file.pkl'):
-    '''save cache_data.
-    '''
-    with open(file_name, 'wb') as f_save:
-        pickle.dump(st.session_state['cache_data'], f_save)
-
-
 def model_training():
     '''model training.
     '''
+
     init_state()
-    cache_data = st.session_state['cache_data']
-    uploaded_file = st.sidebar.file_uploader('上传数据', type=['xlsx', 'csv'])
+    
+    # 读取或更新数据
+    cache_data = read_uploaded_file()
 
-    if uploaded_file is None:
-        ml_step_0()
-        st.stop()
+    # 数据探索与预处理
+    data_exploration(cache_data)
+    # 数据分析
+    st.info('3. 模型特征分析(Features Analysis)', icon='👇')
+    data_analysis(cache_data)
+    # 数据建模
+    data_modeling(cache_data)
 
-    file_id = uploaded_file.id
+    # 模型保存
+    with st.sidebar:
+        agree = st.checkbox('Save Model', help = '以pickle的格式保存所有缓存数据')
+        if agree:
+            title = st.text_input('Model Name', '')
+            if title:
+                cache_save(f'tmp/{title}.pkl')
+                st.info('Model saved successfully.')
 
-    if file_id != st.session_state['file_id']:
-        cache_data['origin'] = read_uploaded_file(uploaded_file)
-        st.session_state['file_id'] = file_id
-        st.session_state['ml_step'] = 1
-        st.sidebar.success('数据更换成功', icon="✅")
-    else:
-        st.sidebar.success('数据上传成功', icon="✅")
-
-    if st.session_state['ml_step'] >= 1:
-        data_exploration(cache_data)
-
-        if st.session_state['ml_step'] == 1:
-            st.warning('请点击🔧进行数据预处理', icon='⚠️')
-        else:
-            st.sidebar.success('已完成数据预处理', icon="📝")
-            # st.json(cache_data['parm_ml'])
-
-            data_modeling(cache_data)
-            if st.session_state['ml_step'] == 2:
-                st.warning('请点击🔧进行模型训练', icon='⚠️')
-
-            if st.session_state['ml_step'] >= 3:
-                with st.sidebar:
-                    st.success('已完成模型训练', icon="💠")
-                    agree = st.checkbox('Save Modle')
-                    if agree:
-                        title = st.text_input('Modle Name', '')
-                        if title:
-                            cache_save(f'tmp/{title}.pkl')
-                            st.info('Model saved successfully.')
-
-                st.text(cache_data['output_pipe']['report']['score'])
-
-                if cache_data['fig_data'].get('feature_importance'):
-                    result = cache_data['fig_data']['feature_importance']
-                    e_bar(result)
-                if cache_data['fig_data'].get('cm'):
-                    result = cache_data['fig_data']['cm']
-                    heatmap(result)
-
-                if cache_data['fig_data'].get('roc'):
-                    fig1, fig2 = st.columns([1, 1])
-                    with fig1:
-                        e_roc(cache_data['fig_data']['roc'])
-                    with fig2:
-                        e_pr(cache_data['fig_data']['pr'])
-
-                if cache_data['fig_data'].get('cluster'):
-                    result = cache_data['fig_data']['cluster']
-                    e_scatter(result)
+    # 结果展示
+    result_display(cache_data)
 
 
 if __name__ == '__main__':
@@ -229,26 +184,33 @@ if __name__ == '__main__':
     st.sidebar.title('An Interactive ML WebApp')
 
     app_mode = st.sidebar.selectbox("Select a task above.", [
-                                    "---", "Training", "Prediction"])
-
+                                    "---", "Training", "Application"])
+    
     if app_mode == "---":
         st.sidebar.success('Choose a task')
         st.markdown(get_file_content_as_string('instructions.md'))
     elif app_mode == "Training":
         st.header('Clustering, Classification and Regression')
         model_training()
-    elif app_mode == "Prediction":
-
-        st.header('Prediction')
+    elif app_mode == "Application":
         files = os.listdir('tmp')
         files_opt = st.sidebar.selectbox('模型选择:', files)
-        if files_opt:
-            cache_data = load_pickle('tmp/' + files_opt)
-            show_download(cache_data)
+        if not files_opt:
+            st.warning('No trained model found!', icon="⚠️")
+            st.stop()
+    
+        cache_data = load_pickle('tmp/' + files_opt)
+        load_state(cache_data)
+        
+        tool_mode = st.sidebar.selectbox("Model", [
+                                        "Prediction", "Checking"])
+        if tool_mode == "Prediction":
             model_prediction(cache_data)
-        else:
-            st.warning('Model Training First!', icon="⚠️")
-
+        elif tool_mode == "Checking":
+            st.info('1. 模型特征分析(Features Analysis)', icon='👇')
+            data_analysis(st.session_state['cache_data'])
+            st.info('2. 模型展示(Model Display)', icon='👇')
+            result_display(st.session_state['cache_data'])
     with st.sidebar:
         st.markdown("---")
         st.markdown(

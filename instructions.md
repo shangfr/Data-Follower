@@ -12,9 +12,9 @@
 	- **Training** : Automatically train and select the optimal model through metrics;
 	- **Evaluation** : View and Plot Evaluation Metrics;
 
-2. **Model Prediction** (*Predictive modeling is a process that uses the well trained model to forecast outcomes.*)
+2. **Model Application** (*Predictive modeling is a process that uses the well trained model to forecast outcomes.*)
 	- **Prediction** : Load the trained model to predict;
-
+	- **Checking** : Load the trained model to analyse;
 
 👈 Select a task from the dropdown on the left.
 
