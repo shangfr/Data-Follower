@@ -97,7 +97,7 @@ def show_ml_step():
 def read_uploaded_file():
     '''read uploaded file.
     '''
-    uploaded_file = st.sidebar.file_uploader('上传数据', type=['xlsx', 'csv'])
+    uploaded_file = st.sidebar.file_uploader('上传数据', type=['xlsx', 'csv'], key='dfa')
     if uploaded_file is None:
         st.sidebar.warning('请先上传数据集', icon='👆')
         reset_state()

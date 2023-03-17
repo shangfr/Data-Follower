@@ -84,7 +84,7 @@ def model_prediction(cache_data):
     feature_names = show_model(cache_data)
 
     uploaded_file = st.sidebar.file_uploader(
-    '上传数据', type=['xlsx', 'csv'])
+    '上传数据', type=['xlsx', 'csv'], key = 'dfp')
     if uploaded_file is None:
         st.markdown('---')
         st.warning('请先上传数据集', icon='👈')
