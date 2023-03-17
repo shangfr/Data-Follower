@@ -25,8 +25,13 @@ def model_cluster(datasets, model_parm):
     n_over_95 = len(total_explained_variance[total_explained_variance >= .95])
     n_to_reach_95 = X.shape[1] - n_over_95 + 1
     tt = round(total_explained_variance[n_to_reach_95-1]*100,2)
-    result = f'🔴 Number of Principal components: {n_to_reach_95}\n🔴 Total Variance Explained: {tt}%'
-
+    
+    result =f'''
+            ### :blue[Cluster metrics]
+            🔴 **Number of Principal components**: {n_to_reach_95}  🔴 **Total Variance Explained**: {tt}%
+            
+            ---
+            '''
     kmeans = KMeans(n_clusters=n, random_state=0,
                     n_init='auto').fit(X_pca[:, :n_to_reach_95])
 

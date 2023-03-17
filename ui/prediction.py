@@ -4,51 +4,8 @@ Created on Thu Feb 23 09:59:38 2023
 
 @author: shangfr
 """
-import pickle
-from io import BytesIO
 import pandas as pd
 import streamlit as st
-
-
-def pickle_model(model):
-    '''Pickle the model inside bytes.
-    '''
-    f = BytesIO()
-    pickle.dump(model, f)
-    return f
-
-def show_download(cache_data, pre_data):
-    '''show download for preprocessing data and trained model.
-    '''
-    st.sidebar.success('数据、模型和预测结果下载', icon="✅")
-    col0, col1, col2 = st.sidebar.columns([1, 1, 1])
-
-    preprocessing_df = pd.DataFrame(cache_data['datasets']['X'])
-    sk_model = cache_data['output_pipe']['model']
-
-    col0.download_button(
-        label='📝',
-        data=preprocessing_df.to_csv(index=False).encode('utf-8'),
-        file_name='preprocessing_df.csv',
-        mime='text/csv',
-        help='download the preprocessing dataframe.'
-    )
-
-    col1.download_button(
-        label='💠',
-        data=pickle_model(sk_model),
-        file_name='model.pkl',
-        help='download the trained model.'
-    )
-
-    col2.download_button(
-        label='💎',
-        data=pre_data.to_csv(index=False).encode('utf-8'),
-        file_name='pre_data.csv',
-        mime='text/csv',
-        help='download the predict dataframe.'
-    )
-
 
 def show_model(cache_data):
     '''show model.
@@ -164,4 +121,15 @@ def model_prediction(cache_data):
     st.dataframe(df.style.background_gradient(
         subset=['predict'], cmap='spring'))
 
-    show_download(cache_data, df)
+    # cache_data['predict'] = df
+    col0, col1 = st.sidebar.columns([1, 5])
+    col1.success('已完成预测')
+    col0.download_button(
+        label='💎',
+        data=df.to_csv(index=False).encode('utf-8'),
+        file_name='pre_data.csv',
+        mime='text/csv',
+        help='download the predict dataframe.'
+    )
+        
+        

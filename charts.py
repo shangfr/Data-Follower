@@ -135,7 +135,7 @@ def heatmap(result):
             'text': title
         },
         "tooltip": {"position": "top"},
-        "grid": {},
+        "grid": {"left": "0%", "right": "0%", "bottom": "0%", "containLabel": True},
         "xAxis": {'name': xname, 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
         "yAxis": {'name': yname, 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
         "visualMap": {
@@ -179,7 +179,7 @@ def e_roc(result):
             'text': title,
             'subtext': subtext,
         },
-
+        "grid": {"left": "3%", "right": "4%", "bottom": "0%", "containLabel": True},
         'xAxis': {
             'min': 0,
             'max': 1,
@@ -222,7 +222,7 @@ def e_pr(result):
         'title': {
             'text': title
         },
-
+        "grid": {"left": "3%", "right": "4%", "bottom": "0%", "containLabel": True},
         'xAxis': {
             'min': 0,
             'max': 1,
@@ -254,9 +254,9 @@ def e_y_vs(result):
     y_pred = result['y_pred']
     x = list(range(len(y_true)))
     options = {
-        "title": {"text": "True vs Pred"},
+        "title": {"text": "Target"},
         "tooltip": {"trigger": "axis"},
-        "legend": {"data": ["y_true", "y_pred"]},
+        "legend": {"data": ["true", "pred"]},
         "grid": {"left": "3%", "right": "4%", "bottom": "0%", "containLabel": True},
         "toolbox": {"feature": {"saveAsImage": {}}},
         "xAxis": {
@@ -267,12 +267,12 @@ def e_y_vs(result):
         "yAxis": {"type": "value"},
         "series": [
             {
-                "name": "y_true",
+                "name": "true",
                 "type": "line",
                 "data": y_true,
             },
             {
-                "name": "y_pred",
+                "name": "pred",
                 "type": "line",
                 "data": y_pred,
             },

@@ -35,11 +35,8 @@ def model_cls(datasets, model_parm):
                'precision': make_scorer(precision_score, average='micro', labels=[pos_id], zero_division=1),
                'recall': make_scorer(recall_score, average='macro', labels=[pos_id], zero_division=1)}
 
-    param_grid = {'learning_rate': [0.01, 0.025, 0.05, 0.075, 0.1, 0.15, 0.2],
-                  'min_samples_split': np.linspace(0.1, 0.5, 12),
-                  'min_samples_leaf': np.linspace(0.1, 0.5, 12),
-                  'max_depth': [3, 5, 8],
-                  'max_features': ['log2', 'sqrt']}
+    param_grid = {'max_depth': [3, 5, 8],
+                  'max_features': ['log2', 'sqrt', None]}
 
     rand_model = RandomizedSearchCV(
         clf,  param_grid, scoring=scoring[score_criterion], random_state=0)
@@ -52,7 +49,7 @@ def model_cls(datasets, model_parm):
     y_pred = best_model.predict(X_test)
 
     cm = confusion_matrix(y_test, y_pred, labels=best_model.classes_)
-    report0 = classification_report(
+    cls_report = classification_report(
         y_test, y_pred, target_names=target_names, zero_division=1)
 
     y_score = best_model.decision_function(X_test)
@@ -67,7 +64,13 @@ def model_cls(datasets, model_parm):
 
     AP = np.sum((recall[:-1] - recall[1:]) * prec[:-1]).round(2)
 
-    result = f'🔴 auc value = {auc(fpr, tpr):.2f}\n' + report0
+    result =f'''
+            ### :blue[classification metrics]
+            🔴 **AUC**: {auc(fpr, tpr):.2f}  🔴 **AP**: {AP:.2f}
+            
+            ---
+            '''
+            
     report = {'score': result}
 
     feature_importance = best_model.feature_importances_
@@ -75,6 +78,7 @@ def model_cls(datasets, model_parm):
     feature_names = [feature_names[i] for i in ind]
 
     fig_data = {'feature_importance': {'names': feature_names, 'importance': feature_importance[ind].tolist()},
+                'cls_report':'>' + cls_report,
                 'cm': {'data': cm.tolist(), 'classes': target_names, 'title':'Confusion Matrix'},
                 'roc': {'fpr': fpr.tolist(), 'tpr': tpr.tolist(), 'AUC': round(auc(fpr, tpr), 2), 'positive': target_names[pos_id]},
                 'pr': {'prec': prec.tolist(), 'recall': recall.tolist(), 'AP': AP}
@@ -101,13 +105,9 @@ def model_regr(datasets, model_parm):
     scoring = {'mean_squared_error': make_scorer(mean_squared_error),
                'mean_pinball_loss': make_scorer(mean_pinball_loss, greater_is_better=False)}
 
-    param_grid = dict(
-        learning_rate=[0.05, 0.1, 0.2],
-        max_depth=[2, 5, 10],
-        min_samples_leaf=[1, 5, 10, 20],
-        min_samples_split=[5, 10, 20, 30, 50],
-    )
-
+    param_grid = {'max_depth': [3, 5, 8],
+                  'max_features': ['log2', 'sqrt', None]}
+    
     sk_model_rand = RandomizedSearchCV(
         regr,  param_grid, scoring=scoring[score_criterion], random_state=0)
     search = sk_model_rand.fit(X_train, y_train)
@@ -119,7 +119,13 @@ def model_regr(datasets, model_parm):
     y_pred = best_sk_model.predict(X_test)
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    result = f'🔴 mean_squared_error:  {round(mse,3)} \n🔴 r2_score:  {round(r2,3)}'
+
+    result =f'''
+            ### :blue[Regression metrics] 
+            🔴 **MSE**: {round(mse,3)}  🔴 **R2**: {round(r2,3)} 
+            
+            ---
+            '''
     report = {'score': result}
     feature_names = [feature_names[i] for i in ind]
     fig_data = {'feature_importance': {'names': feature_names, 'importance': feature_importance[ind].round(3).tolist()},

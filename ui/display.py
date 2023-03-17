@@ -11,7 +11,16 @@ from charts import e_bar, e_scatter, heatmap, e_roc, e_pr, e_y_vs
 def result_display(cache_data):
     '''result display.
     '''
-
+    st.markdown('---')
+    st.markdown(cache_data['output_pipe']['report']['score'])
+    
+    if cache_data['fig_data'].get('cls_report'):
+        result = cache_data['fig_data']['cls_report']
+        st.markdown('### :orange[classification report]')
+        st.text(result)
+        st.markdown('---')
+    
+    
     fig1, fig2 = st.columns([1, 1])
     
     if cache_data['fig_data'].get('feature_importance'):
@@ -38,4 +47,5 @@ def result_display(cache_data):
         result = cache_data['fig_data']['cluster']
         e_scatter(result)
 
-    st.text(cache_data['output_pipe']['report']['score'])
+                
+    

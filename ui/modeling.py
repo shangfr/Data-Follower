@@ -7,6 +7,7 @@ Created on Mon Oct 25 11:35:11 2021
 import json
 import streamlit as st
 from model import model_cls, model_regr, model_cluster
+from utils import pickle_model, pickle_cache
 
 
 @st.cache_resource
@@ -84,5 +85,20 @@ def data_modeling(cache_data):
     if st.session_state['ml_step'] == 2:
         st.warning('请点击🔧进行模型训练', icon='⚠️')
         st.stop()
+    
+    col0, col1 = st.sidebar.columns([1, 5])
+    col1.success('已完成模型训练')
+    sk_model = cache_data['output_pipe']['model']
+    col0.download_button(
+        label='💠',
+        data=pickle_model(sk_model),
+        file_name='model.pkl',
+        help='download the trained model.'
+    )
 
-    st.sidebar.success('已完成模型训练', icon="💠")
+    # 模型保存
+    title = st.sidebar.text_input('👇 Enter a name to save the model', '', help = '以pickle的格式保存所有缓存数据')
+    if title:
+        pickle_cache(f'tmp/{title}.pkl')
+        st.sidebar.info('Model saved successfully.')
+                

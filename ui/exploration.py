@@ -5,6 +5,7 @@ Created on Mon Oct 25 11:35:11 2021
 @author: shangfr
 '''
 import json
+import pandas as pd
 import streamlit as st
 from model.preprocessing import transformer
 
@@ -35,7 +36,7 @@ def show_data(origin):
     with tab1:
         (row_n, col_n) = data.shape
 
-        col1, col2 = st.columns([1, 9])
+        col1, col2 = st.columns([2, 8])
         col1.metric(label='Data Shape', value=str(col_n)+'列',
                           delta=str(row_n)+'行', delta_color='inverse')
         edited_df = col2.experimental_data_editor(dtype_table)
@@ -117,17 +118,14 @@ def data_exploration(cache_data):
                     f'{cls_n}分类模型目标变量样本不均衡，{positive}占比{p_per_t[True]}小于0.25。', icon='🚨')
                 st.stop()
             parm_ml['positive'] = positive
+        elif len(num_cols) > 0:
+            if parm_ml.get('target') and 'target_n' not in st.session_state:
+                st.session_state.target_n = parm_ml['target']
+            target = col3.selectbox(
+                '目标变量', num_cols, key='target_n', help='只能是连续型数值变量', on_change=del_p)
         else:
-
-            if len(num_cols) > 0:
-                if parm_ml.get('target') and 'target_n' not in st.session_state:
-                    st.session_state.target_n = parm_ml['target']
-                target = col3.selectbox(
-                    '目标变量', num_cols, key='target_n', help='只能是连续型数值变量', on_change=del_p)
-            else:
-
-                col3.error('回归模型目标变量不存在！', icon='🚨')
-                st.stop()
+            col3.error('回归模型目标变量不存在！', icon='🚨')
+            st.stop()
             #data[target] = pd.to_numeric(data[target], errors='coerce')
         parm_ml['target'] = target
         variable = variable[variable != target].tolist()
@@ -173,8 +171,16 @@ def data_exploration(cache_data):
         st.warning('请点击🔧进行数据预处理', icon='⚠️')
         st.stop()
     
-    st.sidebar.success('已完成数据预处理', icon="📝")
-
+    col0, col1 = st.sidebar.columns([1, 5])
+    col1.success('已完成数据预处理')
+    preprocessing_df = pd.DataFrame(cache_data['datasets']['X'])
+    col0.download_button(
+        label='📝',
+        data=preprocessing_df.to_csv(index=False).encode('utf-8'),
+        file_name='preprocessing_df.csv',
+        mime='text/csv',
+        help='download the preprocessing dataframe.'
+    )
     
     
     

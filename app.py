@@ -4,13 +4,12 @@ Created on Mon Oct 25 11:35:11 2021
 
 @author: shangfr
 '''
-import os
-import pickle
 import pandas as pd
 import streamlit as st
 from ui import data_exploration, data_analysis
 from ui import data_modeling, result_display
 from ui import model_prediction
+from utils import load_pickle
 
 
 @st.cache_data(show_spinner=False)
@@ -42,12 +41,13 @@ def init_state():
 
     if 'disabled' not in st.session_state:
         st.session_state['disabled'] = False
-        
+
     if 'file_id' not in st.session_state:
         st.session_state['file_id'] = 0
 
     if 'ml_step' not in st.session_state:
         st.session_state['ml_step'] = 0
+
 
 def reset_state():
     '''delete session_state and init.
@@ -56,14 +56,19 @@ def reset_state():
         del st.session_state[key]
     init_state()
 
-def load_state(cache_data):
+
+def load_state():
+
+    cache_data = load_pickle()
+
     reset_state()
     st.session_state['cache_data'] = cache_data
     st.session_state['ml_step'] = 3
     st.session_state.ml_type = cache_data['parm_ml']['ml_type']
     st.session_state['loaded'] = True
     st.session_state['disabled'] = True
-    
+
+
 def show_ml_step():
     '''show ml step.
     '''
@@ -126,29 +131,14 @@ def read_uploaded_file():
     return st.session_state['cache_data']
 
 
-def cache_save(file_name='dict_file.pkl'):
-    '''save cache_data.
-    '''
-    with open(file_name, 'wb') as f_save:
-        pickle.dump(st.session_state['cache_data'], f_save)
-
-@st.cache_resource
-def load_pickle(file_name='dict_file.pkl'):
-    '''load pickle.
-    '''
-    with open(file_name, 'rb') as fr:
-        cache_data = pickle.load(fr)
-    return cache_data
-
 def model_training():
     '''model training.
     '''
 
     init_state()
-    
+
     # 读取或更新数据
     cache_data = read_uploaded_file()
-
     # 数据探索与预处理
     data_exploration(cache_data)
     # 数据分析
@@ -156,17 +146,6 @@ def model_training():
     data_analysis(cache_data)
     # 数据建模
     data_modeling(cache_data)
-
-    # 模型保存
-    with st.sidebar:
-        agree = st.checkbox('Save Model', help = '以pickle的格式保存所有缓存数据')
-        if agree:
-            title = st.text_input('Model Name', '')
-            if title:
-                cache_save(f'tmp/{title}.pkl')
-                st.info('Model saved successfully.')
-
-    # 结果展示
     result_display(cache_data)
 
 
@@ -185,7 +164,7 @@ if __name__ == '__main__':
 
     app_mode = st.sidebar.selectbox("Select a task above.", [
                                     "---", "Training", "Application"])
-    
+
     if app_mode == "---":
         st.sidebar.success('Choose a task')
         st.markdown(get_file_content_as_string('instructions.md'))
@@ -193,19 +172,13 @@ if __name__ == '__main__':
         st.header('Clustering, Classification and Regression')
         model_training()
     elif app_mode == "Application":
-        files = os.listdir('tmp')
-        files_opt = st.sidebar.selectbox('模型选择:', files)
-        if not files_opt:
-            st.warning('No trained model found!', icon="⚠️")
-            st.stop()
-    
-        cache_data = load_pickle('tmp/' + files_opt)
-        load_state(cache_data)
-        
+
+        load_state()
+
         tool_mode = st.sidebar.selectbox("Model", [
-                                        "Prediction", "Checking"])
+            "Prediction", "Checking"])
         if tool_mode == "Prediction":
-            model_prediction(cache_data)
+            model_prediction(st.session_state['cache_data'])
         elif tool_mode == "Checking":
             st.info('1. 模型特征分析(Features Analysis)', icon='👇')
             data_analysis(st.session_state['cache_data'])
