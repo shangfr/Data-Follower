@@ -7,55 +7,7 @@ Created on Thu Feb 23 09:59:38 2023
 import pandas as pd
 import streamlit as st
 
-def show_model(cache_data):
-    '''show model.
-    '''  
-    parm_ml = cache_data['parm_ml']
-    parm_model = cache_data['parm_model']
-    features = parm_ml['features']
-    numerical_cols = features['num_cols']
-    categorical_cols = features['cat_cols']
-    feature_names = numerical_cols+categorical_cols
-
-    st.success("Model loaded successfully. ", icon="👇")
-
-    if parm_ml["ml_type"] == '无监督':
-        content = f'''
-        |  Machine Learning   | n_clusters  | features-num  | features-cat  |
-        |  ----  | ----  |   ----  |   ----  |
-        |  聚类  | {parm_model["n_clusters"]} | {len(numerical_cols)} | {len(categorical_cols)} |
-        '''
-    elif parm_ml["tgt_type"] == '分类':
-        content = f'''
-        |  Machine Learning   | target name  | positive  | features-num  | features-cat  |
-        |  ----  | ----  |   ----  |   ----  |   ----  |
-        | {parm_ml["cls_n"]}{parm_ml["tgt_type"]}  | {parm_ml["target"]} | {parm_ml["positive"]} | {len(numerical_cols)} | {len(categorical_cols)} |
-        '''
-    elif parm_ml["tgt_type"] == '回归':
-        content = f'''
-        |  Machine Learning   | target name  | features-num  | features-cat  |
-        |  ----  | ----  |   ----  |   ----  |
-        | {parm_ml["tgt_type"]}  | {parm_ml["target"]} | {len(numerical_cols)} | {len(categorical_cols)} |
-        '''
-
-    if cache_data['datasets'].get('target_names'):
-        target_names = cache_data['datasets']['target_names']
-
-        tab1, tab2, tab3 = st.tabs(["model", "features", "target"])
-
-        with tab3:
-            st.json(dict(enumerate(target_names)))
-    else:
-        tab1, tab2 = st.tabs(["model", "features"])
-
-    with tab1:
-        st.markdown(content.replace('----', ':----:'))
-    with tab2:
-        st.json(features) 
         
-    return feature_names
-        
-
 def predict(output_pipe,df,mtype):
     
     preprocessor = output_pipe['preprocessor']
@@ -80,14 +32,16 @@ def predict(output_pipe,df,mtype):
 def model_prediction(cache_data):
     '''Prediction.
     '''
+    parm_ml = cache_data['parm_ml']
+    features = parm_ml['features']
+    numerical_cols = features['num_cols']
+    categorical_cols = features['cat_cols']
+    feature_names = numerical_cols+categorical_cols
 
-    feature_names = show_model(cache_data)
-
-    uploaded_file = st.sidebar.file_uploader(
+    uploaded_file = st.file_uploader(
     '上传数据', type=['xlsx', 'csv'])
     if uploaded_file is None:
-        st.markdown('---')
-        st.warning('请先上传数据集', icon='👈')
+        st.warning(f"请先上传数据集，需要特征名称： {'✔️'.join(feature_names)}✔️", icon='👆')
         st.stop()
 
     dtype = uploaded_file.name.split('.')[-1]
@@ -111,14 +65,12 @@ def model_prediction(cache_data):
         st.warning(f'Missing features {str(leak_col)} ', icon='⚠️')
         df[leak_col] = 0
 
-    st.markdown('---')
-    st.success('Prediction Results: ', icon="👇")
     mtype = cache_data['parm_ml']['ml_type']
     output_pipe = cache_data['output_pipe']
     X = df[feature_names]
     df = predict(output_pipe,X,mtype)
     
-    st.dataframe(df.style.background_gradient(
+    st.write("### 👇 Prediction Results", df.style.background_gradient(
         subset=['predict'], cmap='spring'))
 
     # cache_data['predict'] = df

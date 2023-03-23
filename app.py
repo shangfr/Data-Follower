@@ -164,7 +164,10 @@ if __name__ == '__main__':
 
     app_mode = st.sidebar.selectbox("Select a task above.", [
                                     "---", "Training", "Application"])
-
+    # Style
+    with open('style.css')as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
+    
     if app_mode == "---":
         st.sidebar.success('Choose a task')
         st.markdown(get_file_content_as_string('instructions.md'))
@@ -174,9 +177,9 @@ if __name__ == '__main__':
     elif app_mode == "Application":
 
         load_state()
-
+        st.sidebar.success("Model loaded successfully. ", icon="👆")
         tool_mode = st.sidebar.selectbox("Model", [
-            "Prediction", "Checking"])
+            "Checking", "Prediction"])
         if tool_mode == "Prediction":
             model_prediction(st.session_state['cache_data'])
         elif tool_mode == "Checking":

@@ -119,10 +119,14 @@ def data_exploration(cache_data):
                 st.stop()
             parm_ml['positive'] = positive
         elif len(num_cols) > 0:
+            filter3 = dtype_table['var_count'] > 10
+
+            tar_var_regr = variable[filter3].tolist()
+            
             if parm_ml.get('target') and 'target_n' not in st.session_state:
                 st.session_state.target_n = parm_ml['target']
             target = col3.selectbox(
-                '目标变量', num_cols, key='target_n', help='只能是连续型数值变量', on_change=del_p)
+                '目标变量', tar_var_regr, key='target_n', help='只能是连续型数值变量', on_change=del_p)
         else:
             col3.error('回归模型目标变量不存在！', icon='🚨')
             st.stop()
@@ -168,7 +172,7 @@ def data_exploration(cache_data):
         st.session_state['ml_step'] = 2
 
     if st.session_state['ml_step'] == 1:
-        st.warning('请点击🔧进行数据预处理', icon='⚠️')
+        st.warning('请先点击🔧进行数据预处理', icon='⚠️')
         st.stop()
     
     col0, col1 = st.sidebar.columns([1, 5])

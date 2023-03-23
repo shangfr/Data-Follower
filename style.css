@@ -1,0 +1,20 @@
+[data-testid=metric-container], div.stDataFrame, div.stButton {
+    background-color: #f5f5f5;
+    border: 2px solid;
+    padding: 5px 10px 5px 10px;
+    border-radius: 10px;
+    color: #33a3dc;
+    box-shadow: 1px;
+}
+
+[data-testid=stArrowVegaLiteChart] {
+    box-shadow: 0 0 3px #cccccc;
+    padding: 10px;
+}
+
+
+div.stButton {
+    text-align:center;
+}
+
+
