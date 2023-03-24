@@ -50,7 +50,7 @@ def data_analysis(cache_data):
     parm_ml = cache_data['parm_ml']
     datasets = cache_data['datasets']
     feature_names = parm_ml['feature_names']
-
+    cor_dict = datasets['cor_dict']
     col0, col1 = st.columns(2)
     option_t = col0.selectbox('Method', ["Distribution", "Correlation"])
     if option_t == 'Distribution':
@@ -58,7 +58,6 @@ def data_analysis(cache_data):
         view_features(data, parm_ml, option_f)
     elif option_t == 'Correlation':
 
-        result = {'data': pd.DataFrame(datasets['X']).corr().round(2).values.tolist(
-        ), 'classes': feature_names, 'title': 'Correlation Matrix'}
+        result = {'data': cor_dict['cor'], 'classes': cor_dict['cls_names'], 'title': 'Correlation Matrix'}
 
         heatmap(result)

@@ -61,7 +61,7 @@ def data_exploration(cache_data):
 
     variable = dtype_table['variable']
 
-    filter1 = dtype_table['dtypes'] != 'object'
+    filter1 = dtype_table['dtypes'] != 'category'
     num_cols = variable[filter1]
 
     parm_ml = cache_data['parm_ml']
@@ -177,6 +177,7 @@ def data_exploration(cache_data):
     
     col0, col1 = st.sidebar.columns([1, 5])
     col1.success('已完成数据预处理')
+    '''
     preprocessing_df = pd.DataFrame(cache_data['datasets']['X'])
     col0.download_button(
         label='📝',
@@ -185,6 +186,6 @@ def data_exploration(cache_data):
         mime='text/csv',
         help='download the preprocessing dataframe.'
     )
-    
+    '''
     
     

@@ -9,7 +9,7 @@ import streamlit as st
 from ui import data_exploration, data_analysis
 from ui import data_modeling, result_display
 from ui import model_prediction
-from utils import load_pickle
+from utils import describe,load_pickle
 
 
 @st.cache_data(show_spinner=False)
@@ -110,18 +110,7 @@ def read_uploaded_file():
         elif dtype in ['xls', 'xlsx']:
             df = pd.read_excel(uploaded_file)
 
-        dts = df.dtypes
-        var_count = df.nunique(axis=0, dropna=True)
-
-        df_dt = pd.DataFrame(
-            {'dtypes': dts.values.astype(str)}, index=dts.index)
-        df_dt = df_dt.join(var_count.rename('var_count'))
-        df_dt['effective'] = [True]*len(dts)
-        df_dt.index.name = 'variable'
-        df_dt.reset_index(inplace=True)
-
-        st.session_state['cache_data']['origin'] = {
-            'data': df, 'dtype_table': df_dt}
+        st.session_state['cache_data']['origin'] = describe(df)
         st.session_state['file_id'] = file_id
         st.session_state['ml_step'] = 1
         st.sidebar.success('数据更换成功', icon="✅")

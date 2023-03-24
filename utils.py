@@ -11,13 +11,50 @@ from io import BytesIO
 import streamlit as st
 
 
+def describe(df):
+    '''describe.
+    '''
+    dts = df.dtypes
+    for col in dts[df.dtypes == 'object'].index:
+        df[col] = df[col].astype('category')
+    dts = df.dtypes
+    s0 = df.nunique(axis=0, dropna=True)
+    s1 = df.notnull().sum()
+    s2 = df.isnull().sum()/df.shape[0]
+
+    df_dt = pd.DataFrame(
+        {'dtypes': dts.values.astype(str),
+         'var_count': s0,
+         'notnull': s1,
+         'na_ratio': s2.round(2),
+         'effective': [True]*len(dts)
+         }, index=dts.index)
+
+    # 常量值、单类别比例>95%、缺失率>95%的变量设为无效
+
+    filter0 = s0 == 1
+    filter10 = s0/s1 >= 0.95
+    filter11 = df_dt['dtypes'] == 'category'
+    filter2 = s2 >= 0.95
+
+    filters = filter0 | (filter10 & filter11) | filter2
+
+    df_dt.loc[filters, 'effective'] = False
+
+    df_dt.index.name = 'variable'
+    df_dt.reset_index(inplace=True)
+
+    output = {'data': df, 'dtype_table': df_dt}
+    return output
+
+
 @st.cache_resource
 def pickle_load(files_opt):
     with open('tmp/' + files_opt, 'rb') as fr:
         cache_data = pickle.load(fr)
     return cache_data
-        
-        
+
+
 def load_pickle():
     '''load pickle.
     '''
@@ -28,6 +65,7 @@ def load_pickle():
         st.stop()
     cache_data = pickle_load(files_opt)
     return cache_data
+
 
 def pickle_cache(file_name='dict_file.pkl'):
     '''save cache_data.
@@ -43,6 +81,7 @@ def pickle_model(model):
     pickle.dump(model, f)
     return f
 
+
 def show_download(cache_data):
     '''show download for preprocessing data and trained model.
     '''
@@ -50,7 +89,6 @@ def show_download(cache_data):
     col0, col1, col2 = st.sidebar.columns([1, 1, 1])
 
     preprocessing_df = pd.DataFrame(cache_data['datasets']['X'])
-    
 
     col0.download_button(
         label='📝',
@@ -59,7 +97,7 @@ def show_download(cache_data):
         mime='text/csv',
         help='download the preprocessing dataframe.'
     )
-    
+
     if cache_data['output_pipe'].get('model'):
         sk_model = cache_data['output_pipe']['model']
         col1.download_button(
