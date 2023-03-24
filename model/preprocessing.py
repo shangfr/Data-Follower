@@ -27,7 +27,7 @@ def x2cor(xarray):
     
     # 寻找非全零列
     non_zero = np.where(emp_cor.any(axis=0))[0]
-    if non_zero:
+    if len(non_zero)>0:
         output = {'cor':emp_cor[:,non_zero][non_zero,:].tolist(),'non_zero':non_zero.tolist()}
     else:
         output = {'cor':emp_cor.tolist(),'non_zero':list(range(len(emp_cor)))}
