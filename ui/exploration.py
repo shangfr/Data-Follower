@@ -49,6 +49,13 @@ def show_data(origin):
     return edited_df[filter0]
 
 
+@st.cache_data
+def convert_df(X, feature_names):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    df = pd.DataFrame(X, columns=feature_names)
+    return df.to_csv(index=False).encode('utf-8')
+
+
 def data_exploration(cache_data):
     '''ML type select.
     '''
@@ -57,7 +64,7 @@ def data_exploration(cache_data):
 
     dtype_table = show_data(origin)
 
-    st.info('2. 学习类型(ML type)', icon='👇')
+    st.info('2. 机器学习(Machine Learning)', icon='👇')
 
     variable = dtype_table['variable']
 
@@ -122,7 +129,7 @@ def data_exploration(cache_data):
             filter3 = dtype_table['var_count'] > 10
 
             tar_var_regr = variable[filter3].tolist()
-            
+
             if parm_ml.get('target') and 'target_n' not in st.session_state:
                 st.session_state.target_n = parm_ml['target']
             target = col3.selectbox(
@@ -174,18 +181,17 @@ def data_exploration(cache_data):
     if st.session_state['ml_step'] == 1:
         st.warning('请先点击🔧进行数据预处理', icon='⚠️')
         st.stop()
-    
+
     col0, col1 = st.sidebar.columns([1, 5])
     col1.success('已完成数据预处理')
-    '''
-    preprocessing_df = pd.DataFrame(cache_data['datasets']['X'])
+
+    X = cache_data['datasets']['X']
+    feature_names = cache_data['datasets']['feature_names']
+    csv_data = convert_df(X, feature_names)
     col0.download_button(
         label='📝',
-        data=preprocessing_df.to_csv(index=False).encode('utf-8'),
+        data=csv_data,
         file_name='preprocessing_df.csv',
         mime='text/csv',
         help='download the preprocessing dataframe.'
     )
-    '''
-    
-    

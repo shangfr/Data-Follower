@@ -14,13 +14,14 @@ from utils import pickle_model, pickle_cache
 def train(datasets, model_parm):
     '''Training base on ML type.
     '''
+    models = [model_cls, model_regr, model_cluster]
     if model_parm['ml_type'] == '无监督':
-        model_run = model_cluster
+        model_run = models[2]
     else:
         if model_parm['tgt_type'] == '分类':
-            model_run = model_cls
+            model_run = models[0]
         else:
-            model_run = model_regr
+            model_run = models[1]
 
     report, fig, sk_model = model_run(datasets, model_parm)
 

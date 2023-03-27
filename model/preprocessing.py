@@ -11,7 +11,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler, LabelEncoder
 from sklearn.covariance import empirical_covariance
 
-def x2cor(xarray):  
+def x2cor(xarray, r = 0.1):  
     # #############################################################################
     # Learn a graphical structure from the correlations
     xarray = StandardScaler().fit_transform(xarray)
@@ -22,16 +22,10 @@ def x2cor(xarray):
     emp_cov *= d[:, np.newaxis]
     emp_cor = np.around(emp_cov, decimals=3)
 
-    zero = (np.abs(np.triu(emp_cor, k=1)) < 0.1)        
+    zero = (np.abs(np.triu(emp_cor, k=1)) < r)        
     emp_cor[zero] = 0
     
-    # 寻找非全零列
-    non_zero = np.where(emp_cor.any(axis=0))[0]
-    if len(non_zero)>0:
-        output = {'cor':emp_cor[:,non_zero][non_zero,:].tolist(),'non_zero':non_zero.tolist()}
-    else:
-        output = {'cor':emp_cor.tolist(),'non_zero':list(range(len(emp_cor)))}
-    return output
+    return emp_cor.tolist()
 
 def transformer(cache_data):
     '''transformer data using sklearn.preprocessing.
@@ -66,14 +60,12 @@ def transformer(cache_data):
 
 
     datasets = {}
+    datasets['features'] = features
     feature_names = numerical_cols+categorical_cols
     X = preprocessor.fit_transform(data[feature_names])
     datasets['X'] = X
     datasets['feature_names'] = feature_names
-    cor_dict = x2cor(X)
-    cor_dict['cls_names'] = [feature_names[i] for i in cor_dict['non_zero']]
-        
-    datasets['cor_dict'] = cor_dict
+    datasets['cor_list'] = x2cor(X)
     
     ml_type = parm_ml['ml_type']
     if ml_type == '有监督':

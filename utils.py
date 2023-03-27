@@ -73,7 +73,7 @@ def pickle_cache(file_name='dict_file.pkl'):
     with open(file_name, 'wb') as f_save:
         pickle.dump(st.session_state['cache_data'], f_save)
 
-
+@st.cache_resource
 def pickle_model(model):
     '''Pickle the model inside bytes.
     '''
