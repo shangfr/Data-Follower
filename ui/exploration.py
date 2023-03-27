@@ -33,7 +33,7 @@ def show_data(origin):
         edited_df = col2.experimental_data_editor(dtype_table)
 
     with tab2:
-        st.dataframe(data)
+        st.dataframe(data.head(200))
 
     filter0 = edited_df['effective'] == True
 
