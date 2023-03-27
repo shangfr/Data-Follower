@@ -9,7 +9,7 @@ import streamlit as st
 from ui import data_exploration, data_analysis
 from ui import data_modeling, result_display
 from ui import model_prediction
-from utils import describe,load_pickle
+from utils import describe, load_pickle
 
 
 @st.cache_data(show_spinner=False)
@@ -25,16 +25,14 @@ def init_state():
     '''cache_data session_state Initialization.
     '''
     if 'cache_data' not in st.session_state:
-        st.session_state['cache_data'] = {'origin': {},
-                                          'parm_data': {},
-                                          'datasets': {},
-                                          'parm_ml': {'ml_type': '有监督',
-                                                      'tgt_type': '分类',
-                                                      'cls_n': 2},
-                                          'parm_model': {'score_criterion': ''},
-                                          'output_pipe': {'preprocessor': '',
-                                                          'model': '',
-                                                          'report': {}}}
+        st.session_state['cache_data'] = {
+            'origin': {},
+            'machine_learning': {
+                'parm': {},
+                'model_pipe': {}
+            },
+            'output': {}
+        }
 
     if 'loaded' not in st.session_state:
         st.session_state['loaded'] = False
@@ -64,7 +62,6 @@ def load_state():
     reset_state()
     st.session_state['cache_data'] = cache_data
     st.session_state['ml_step'] = 3
-    st.session_state.ml_type = cache_data['parm_ml']['ml_type']
     st.session_state['loaded'] = True
     st.session_state['disabled'] = True
 
@@ -97,7 +94,8 @@ def show_ml_step():
 def read_uploaded_file():
     '''read uploaded file.
     '''
-    uploaded_file = st.sidebar.file_uploader('上传数据', type=['xlsx', 'csv'], key='dfa')
+    uploaded_file = st.sidebar.file_uploader(
+        '上传数据', type=['xlsx', 'csv'], key='dfa')
     if uploaded_file is None:
         st.sidebar.warning('请先上传数据集', icon='👆')
         reset_state()
@@ -155,8 +153,8 @@ if __name__ == '__main__':
                                     "---", "Training", "Application"])
     # Style
     with open('style.css')as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html = True)
-    
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
     if app_mode == "---":
         st.sidebar.success('Choose a task')
         st.markdown(get_file_content_as_string('instructions.md'))

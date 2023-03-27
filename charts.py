@@ -88,7 +88,7 @@ def e_scatter(result):
             'pieces': pieces
         },
         'grid': {
-            'width':'90%',
+            'width': '90%',
             'left': 120
         },
         'xAxis': {},
@@ -111,36 +111,52 @@ def heatmap(result):
     '''
     xy_label = result['classes']
     c_m = result['data']
-    data_min = min(min(c_m))
-    data_max = max(max(c_m))
+    min_value = 0
+    max_value = 1
+    c_m_len = len(c_m)
     data = []
-    for i in range(len(c_m)):
+    for i in range(c_m_len):
         for j in range(len(c_m[i])):
-            data.append([i, j, c_m[i][j]])
+            if c_m[i][j] == 0:
+                pass
+            else:
+                value = c_m[i][j]
+                data.append([i, j, value])
+                min_value = min(min_value, value)
+                max_value = max(max_value, value)
 
     text_style = {
-        'color': '#000',
+        'color': '#f15a22',
         'fontSize': 12,
     }
+    font_size = int(100/c_m_len)
+
+    text_style_v = {
+        'color': '#FFF',
+        'fontSize': font_size,
+    }
+
     title = result['title']
     xname = ''
     yname = ''
-    show = False
+    show = True
+    if font_size < 2:
+        show = False
     if title == 'Confusion Matrix':
         xname = 'Predicted label'
         yname = 'True label'
-        show = True
     option = {
         'title': {
             'text': title
         },
         "tooltip": {"position": "top"},
-        "grid": {"left": "0%", "right": "0%", "bottom": "0%", "containLabel": True},
-        "xAxis": {'name': xname, 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
-        "yAxis": {'name': yname, 'nameLocation': "middle", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
+        "grid": {"left": "10%", "right": "20%", "bottom": "5%", "containLabel": True},
+        "xAxis": {'name': xname, 'nameLocation': "center", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}, 'position': 'top'},
+        "yAxis": {'name': yname, 'nameLocation': "center", 'nameTextStyle': text_style, "type": "category", "data": xy_label, "splitArea": {"show": True}},
         "visualMap": {
-            "min": data_min,
-            "max": data_max,
+            "min": min_value,
+            "max": max_value,
+            "calculable": "true",
             "orient": "vertical",
             "left": "right",
             "top": "center",
@@ -150,7 +166,7 @@ def heatmap(result):
                 "name": title,
                 "type": "heatmap",
                 "data": data,
-                "label": {"show": show},
+                "label": {"show": show, "textStyle": text_style_v},
                 "emphasis": {
                     "itemStyle": {"shadowBlur": 10, "shadowColor": "rgba(0, 0, 0, 0.5)"}
                 },

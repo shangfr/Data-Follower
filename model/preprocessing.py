@@ -11,7 +11,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler, LabelEncoder
 from sklearn.covariance import empirical_covariance
 
-def x2cor(xarray, r = 0.1):  
+
+def x2cor(xarray, r=0.1):
     # #############################################################################
     # Learn a graphical structure from the correlations
     xarray = StandardScaler().fit_transform(xarray)
@@ -22,19 +23,19 @@ def x2cor(xarray, r = 0.1):
     emp_cov *= d[:, np.newaxis]
     emp_cor = np.around(emp_cov, decimals=3)
 
-    zero = (np.abs(np.triu(emp_cor, k=1)) < r)        
+    zero = (np.abs(np.triu(emp_cor, k=1)) < r)
     emp_cor[zero] = 0
-    
-    return emp_cor.tolist()
 
-def transformer(cache_data):
+    return emp_cor
+
+
+def transformer(data, parm_ml):
     '''transformer data using sklearn.preprocessing.
     '''
-    data = cache_data['origin']['data']
+
     data.dropna(axis=1, how='all', inplace=True)
     data.drop_duplicates(subset=None, keep='first', inplace=True)
-    
-    parm_ml = cache_data['parm_ml']
+
     features = parm_ml['features']
     numerical_cols = features['num_cols']
     categorical_cols = features['cat_cols']
@@ -44,9 +45,9 @@ def transformer(cache_data):
     numerical_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='constant'))
     ])
-    
+
     #
-    
+
     categorical_transformer = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='most_frequent')),
         ('encoder', OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1))
@@ -58,34 +59,30 @@ def transformer(cache_data):
             ('cat', categorical_transformer, categorical_cols)
         ])
 
-
     datasets = {}
-    datasets['features'] = features
     feature_names = numerical_cols+categorical_cols
     X = preprocessor.fit_transform(data[feature_names])
     datasets['X'] = X
-    datasets['feature_names'] = feature_names
-    datasets['cor_list'] = x2cor(X)
-    
-    ml_type = parm_ml['ml_type']
-    if ml_type == '有监督':
-        target = parm_ml['target']
-        tgt_type = parm_ml['tgt_type']
-        if tgt_type == '分类':
-            positive = parm_ml['positive']
-            y = data[target]
-            le = LabelEncoder()
-            #y = y == positive
-            
-            y = le.fit_transform(y)
-            
-            datasets['target_names'] = list(map(str,le.classes_))
-            datasets['pos_id'] = le.transform([positive])[0]
-        elif tgt_type == '回归':
-            y = data[target].values
+    datasets['cor_matrix'] = x2cor(X)
 
+    parm_ml['feature_names'] = feature_names
+    model_type = parm_ml['model_type']
+    target = parm_ml['target']
+
+    if model_type == '分类':
+        positive = parm_ml['positive']
+        y = data[target]
+        le = LabelEncoder()
+        #y = y == positive
+
+        y = le.fit_transform(y)
+
+        parm_ml['target_names'] = list(map(str, le.classes_))
+        parm_ml['pos_id'] = le.transform([positive])[0]
+    elif model_type == '回归':
+        y = data[target].values
+
+    if target:
         datasets['y'] = y
-        
-        
-        
-    return datasets,preprocessor
+
+    return datasets, preprocessor

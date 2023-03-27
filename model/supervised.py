@@ -6,7 +6,8 @@ Created on Mon Nov  8 16:01:33 2021
 '''
 
 import numpy as np
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import train_test_split, HalvingGridSearchCV
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 from sklearn.metrics import r2_score, mean_pinball_loss, mean_squared_error
 from sklearn.metrics import make_scorer, accuracy_score, precision_score, recall_score
@@ -18,9 +19,9 @@ def model_cls(datasets, model_parm):
     '''
     X = datasets['X']
     y = datasets['y']
-    feature_names = datasets['feature_names']
-    target_names = datasets['target_names']
-    pos_id = datasets['pos_id']
+    feature_names = model_parm['feature_names']
+    target_names = model_parm['target_names']
+    pos_id = model_parm['pos_id']
 
     score_criterion = model_parm['score_criterion']
 
@@ -36,13 +37,13 @@ def model_cls(datasets, model_parm):
                'recall': make_scorer(recall_score, average='macro', labels=[pos_id], zero_division=1)}
 
     param_grid = {'max_depth': [3, 5, 8],
-                  'max_features': ['log2', 'sqrt', None]}
+                  'max_features': ['log2', 'sqrt']}
 
-    rand_model = RandomizedSearchCV(
+    rand_model = HalvingGridSearchCV(
         clf,  param_grid, scoring=scoring[score_criterion], random_state=0)
 
     search = rand_model.fit(X_train, y_train)
-    # search.best_params_
+
     best_model = rand_model.best_estimator_
 
     # Classification metrics
@@ -64,22 +65,22 @@ def model_cls(datasets, model_parm):
 
     AP = np.sum((recall[:-1] - recall[1:]) * prec[:-1]).round(2)
 
-    result =f'''
+    result = f'''
             ### :blue[classification metrics]
             🔴 **AUC**: {auc(fpr, tpr):.2f}  🔴 **AP**: {AP:.2f}
             
             ---
             '''
-            
-    report = {'score': result}
+
+    report = {'score': result, 'best_params': search.best_params_}
 
     feature_importance = best_model.feature_importances_
     ind = np.argsort(-feature_importance)
     feature_names = [feature_names[i] for i in ind]
 
     fig_data = {'feature_importance': {'names': feature_names, 'importance': feature_importance[ind].tolist()},
-                'cls_report':'>' + cls_report,
-                'cm': {'data': cm.tolist(), 'classes': target_names, 'title':'Confusion Matrix'},
+                'cls_report': '>' + cls_report,
+                'cm': {'data': cm.tolist(), 'classes': target_names, 'title': 'Confusion Matrix'},
                 'roc': {'fpr': fpr.tolist(), 'tpr': tpr.tolist(), 'AUC': round(auc(fpr, tpr), 2), 'positive': target_names[pos_id]},
                 'pr': {'prec': prec.tolist(), 'recall': recall.tolist(), 'AP': AP}
                 }
@@ -92,7 +93,7 @@ def model_regr(datasets, model_parm):
     '''
     X = datasets['X']
     y = datasets['y']
-    feature_names = datasets['feature_names']
+    feature_names = model_parm['feature_names']
     score_criterion = model_parm['score_criterion']
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -106,12 +107,12 @@ def model_regr(datasets, model_parm):
                'mean_pinball_loss': make_scorer(mean_pinball_loss, greater_is_better=False)}
 
     param_grid = {'max_depth': [3, 5, 8],
-                  'max_features': ['log2', 'sqrt', None]}
-    
-    sk_model_rand = RandomizedSearchCV(
+                  'max_features': ['log2', 'sqrt']}
+
+    sk_model_rand = HalvingGridSearchCV(
         regr,  param_grid, scoring=scoring[score_criterion], random_state=0)
     search = sk_model_rand.fit(X_train, y_train)
-    # search.best_params_
+
     best_sk_model = sk_model_rand.best_estimator_
     feature_importance = best_sk_model.feature_importances_
     ind = np.argsort(-feature_importance)
@@ -120,16 +121,16 @@ def model_regr(datasets, model_parm):
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
-    result =f'''
+    result = f'''
             ### :blue[Regression metrics] 
             🔴 **MSE**: {round(mse,3)}  🔴 **R2**: {round(r2,3)} 
             
             ---
             '''
-    report = {'score': result}
+    report = {'score': result, 'best_params': search.best_params_}
     feature_names = [feature_names[i] for i in ind]
     fig_data = {'feature_importance': {'names': feature_names, 'importance': feature_importance[ind].round(3).tolist()},
-                'y_vs':{'y_true':y_test.round(3).tolist(),'y_pred':y_pred.round(3).tolist()}
+                'y_vs': {'y_true': y_test.round(3).tolist(), 'y_pred': y_pred.round(3).tolist()}
                 }
 
     # df=pd.DataFrame.from_dict(search.cv_results_)
