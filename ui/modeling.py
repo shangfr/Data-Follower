@@ -36,15 +36,17 @@ def model_setup(model_dict):
         score_criterion = col1.selectbox(
             '评分准则', ['accuracy', 'precision', 'recall'], key='score_criterion_c', on_change=reset_step)
         model_dict['score_criterion'] = score_criterion
+        option = col2.selectbox('Classifier',['GradientBoosting'],disabled=True)
     elif model_type == '回归':
         score_criterion = col1.selectbox(
             '评分准则', ['mean_squared_error', 'mean_pinball_loss'], key='score_criterion_r', on_change=reset_step)
         model_dict['score_criterion'] = score_criterion
+        option = col2.selectbox('Regressor',['GradientBoosting'],disabled=True)
     elif model_type == '聚类':
         max_n = model_dict['max_n']
         model_dict['n_clusters'] = col1.number_input(
             '聚类数目', 2, min(max_n, 10), key='n_clusters', on_change=reset_step)
-
+        option = col2.selectbox('Cluster',['KMeans'],disabled=True)
     return model_dict
 
 

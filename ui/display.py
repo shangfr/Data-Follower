@@ -22,7 +22,7 @@ def show_model(machine_learning):
         content = f'''
         |  Model   | n_clusters  | features-num  | features-cat  |
         |  ----  | ----  |   ----  |   ----  |
-        |  聚类  | {ml_parm["n_clusters"]} | {n0} | {n1} |
+        |  {ml_parm["model_type"]}  | {ml_parm["n_clusters"]} | {n0} | {n1} |
         '''
     elif ml_parm["model_type"] == '分类':
         content = f'''
@@ -37,24 +37,20 @@ def show_model(machine_learning):
         | {ml_parm["model_type"]}  | {ml_parm["target"]} | {n0} | {n1} |
         '''
 
-    if ml_parm.get('target_names'):
-        target_names = ml_parm['target_names']
-
-        tab1, tab2, tab3 = st.tabs(["model", "features", "target"])
-
-        with tab3:
-            st.json(dict(enumerate(target_names)))
-    else:
-        tab1, tab2 = st.tabs(["model", "features"])
+    tab1, tab2 = st.tabs(["model", "variables"])
 
     with tab1:
         st.markdown(content.replace('----', ':----:'))
     with tab2:
         if n0 > 0:
-            st.caption(f"numerical cols: {'✔️'.join(numerical_cols)}✔️")
+            st.caption(f":orange[numerical features]: {'✔️'.join(numerical_cols)}✔️")
         if n1 > 0:
-            st.caption(f"categorical cols: {'✔️'.join(categorical_cols)}✔️")
+            st.caption(f":orange[categorical features]: {'✔️'.join(categorical_cols)}✔️")
 
+        if ml_parm.get('target_names') and ml_parm["model_type"] == '分类':
+            target_names = ml_parm['target_names']
+            st.caption(f":orange[target name]: {ml_parm['target']}✔️")
+            st.json(dict(enumerate(target_names)))
     st.markdown('---')
 
 

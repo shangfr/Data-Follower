@@ -73,15 +73,13 @@ def data_exploration(cache_data):
     if model_type == m_type_lst[0]:
         cls_n = col2.number_input(
             '类别数', 2, 3, key='cls_n', help='二分类或多分类')
-        ml_parm['cls_n'] = cls_n
+        
         filter2 = dtype_table['var_count'] == cls_n
-
         tar_var_cls = variable[filter2].tolist()
 
         if len(tar_var_cls) > 0:
             target = col3.selectbox(
                 '目标变量', tar_var_cls, key='target', help='二分类或多分类，且类别数<5')
-
         else:
             col1.error(f'{cls_n}分类模型目标变量不存在！', icon='🚨')
             st.stop()
@@ -90,17 +88,19 @@ def data_exploration(cache_data):
 
         positive = col3.selectbox(
             'True Positive', t_list, key='positive', help='Value of positive class')
-        ml_parm['positive'] = positive
+
         p_per_t = (data[target] == positive).value_counts(normalize=True)
         if p_per_t[True] < 0.25:
             st.error(
                 f'{cls_n}分类模型目标变量样本不均衡，{positive}占比{p_per_t[True]}小于0.25。', icon='🚨')
             st.stop()
 
+        ml_parm['cls_n'] = cls_n
+        ml_parm['positive'] = positive
+        
     elif model_type == m_type_lst[1]:
         if len(num_cols) > 0:
             filter3 = dtype_table['var_count'] > 10
-
             tar_var_regr = variable[filter3].tolist()
 
             target = col3.selectbox(

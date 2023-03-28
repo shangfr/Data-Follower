@@ -43,20 +43,28 @@ def model_prediction(cache_data):
     numerical_cols = features['num_cols']
     categorical_cols = features['cat_cols']
     feature_names = numerical_cols+categorical_cols
+    
+    col1, col2 = st.columns([8, 2])
 
-    uploaded_file = st.file_uploader(
+    uploaded_file = col1.file_uploader(
         '上传数据', type=['xlsx', 'csv'])
     if uploaded_file is None:
         st.warning(f"请先上传数据集，需要特征名称： {'✔️'.join(feature_names)}✔️", icon='👆')
         st.stop()
-
+    
     dtype = uploaded_file.name.split('.')[-1]
     if dtype in ['csv', 'txt']:
         df = pd.read_csv(uploaded_file)
     elif dtype in ['xls', 'xlsx']:
         df = pd.read_excel(uploaded_file)
     cols = df.columns.tolist()
-
+    
+    (row_n, col_n) = df.shape
+    col2.caption('To be predicted')
+    col2.metric(label='Data Shape', value=str(col_n)+'列',
+                      delta=str(row_n)+'行', delta_color='inverse')
+    
+    
     check_col = [f for f in feature_names if f in cols]
     leak_col = [f for f in feature_names if f not in cols]
 
@@ -76,9 +84,10 @@ def model_prediction(cache_data):
     X = df[feature_names]
     df = predict(output_pipe, X, mtype)
 
-    st.write("### 👇 Prediction Results", df.style.background_gradient(
+    st.write("### 👇 Prediction Results", df.head(200).style.background_gradient(
         subset=['predict'], cmap='spring'))
-
+    
+    st.success("Prediction successfully. Click Download to view all.", icon="👈")
     col0, col1 = st.sidebar.columns([1, 5])
     col1.success('已完成预测')
     col0.download_button(
